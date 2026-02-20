@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BTV Dashboard - Q2 Bevindingen les 2, casus 5</title>
+    <title>BTV Dashboard - Casus 5: Amsterdam</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script type="module">
@@ -21,7 +21,6 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const LES_ID = "q2_l2_c5_amsterdam";
 
         window.startLes = () => {
             const naam = document.getElementById('uNaam').value.trim();
@@ -30,10 +29,19 @@
             document.getElementById('loginOverlay').style.display='none';
             document.getElementById('mainContent').classList.remove('hidden');
             document.getElementById('displayKlas').innerText = klas;
-            initLive(klas, naam);
+            initLive(klas);
         };
 
-        async function initLive(klas, naam) {
+        window.speakWitness = () => {
+            const text = document.getElementById('witnessText').innerText;
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.lang = 'nl-NL';
+            msg.pitch = 0.9;
+            msg.rate = 0.9;
+            window.speechSynthesis.speak(msg);
+        };
+
+        async function initLive(klas) {
             const q = query(collection(db, "btv_2026"), where("klas", "==", klas), orderBy("ts", "desc"));
             onSnapshot(q, (sn) => {
                 const feed = document.getElementById('liveFeed');
@@ -64,7 +72,7 @@
             });
 
             if(type === 'PV Bevindingen') {
-                alert("Systeemmelding: Dienstoverdracht aan VOA voltooid. Verslag opgeslagen.");
+                alert("SYSTEEMMELDING: Dienstoverdracht voltooid. Uw PV Bevindingen zijn succesvol verwerkt in de livefeed.");
             } else {
                 alert(type + " is succesvol verzonden.");
             }
@@ -81,14 +89,14 @@
 
     <div id="loginOverlay" class="fixed inset-0 bg-police z-50 flex items-center justify-center p-4">
         <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md border-t-8 border-yellow-500">
-            <h1 class="font-black text-2xl mb-2 text-police uppercase italic tracking-tight">Q2 Bevindingen - Casus 5</h1>
-            <p class="text-[10px] text-slate-500 mb-6 font-bold uppercase">Amsterdam Eerste van Swindenstraat</p>
+            <h1 class="font-black text-2xl mb-2 text-police uppercase italic tracking-tight text-center">Inloggen NATO</h1>
+            <p class="text-[10px] text-slate-500 mb-6 font-bold uppercase text-center">Kwartier 2 - Casus 5</p>
             <input type="text" id="uNaam" placeholder="Voornaam" class="w-full border-2 p-4 rounded-xl mb-4 font-bold text-center focus:border-blue-500 outline-none">
             <select id="uKlas" class="w-full border-2 p-4 rounded-xl mb-8 font-bold text-center focus:border-blue-500 outline-none">
                 <option value="">-- Kies Eenheid --</option>
                 <option>Delta</option><option>Echo</option><option>Foxtrot</option><option>Lima</option><option>Mike</option>
             </select>
-            <button onclick="startLes()" class="w-full bg-police text-white p-5 rounded-xl font-black uppercase tracking-widest hover:bg-blue-900 transition-colors">Start Dashboard</button>
+            <button onclick="startLes()" class="w-full bg-police text-white p-5 rounded-xl font-black uppercase tracking-widest hover:bg-blue-900 transition-colors">Log in</button>
         </div>
     </div>
 
@@ -96,103 +104,75 @@
         
         <header class="bg-police text-white p-6 rounded-2xl shadow-xl flex justify-between items-center border-b-4 border-yellow-500">
             <div>
-                <h1 class="font-black italic uppercase text-xl">BTV Dashboard 2026</h1>
-                <p class="text-[10px] text-yellow-400 font-bold uppercase">Eenheid: <span id="displayKlas"></span></p>
+                <h1 class="font-black italic uppercase text-xl italic">BTV DASHBOARD 2026</h1>
+                <p class="text-[10px] text-yellow-400 font-bold uppercase tracking-widest leading-none">Eenheid: <span id="displayKlas"></span></p>
             </div>
         </header>
 
         <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-            <h2 class="font-black uppercase text-xs text-police mb-4 border-b pb-2">Context en Locatie</h2>
-            <div class="space-y-4 text-sm leading-relaxed text-slate-700">
-                <p>De Dapperstraat is gedurende de dagmarkt van 06.00 en 19.00 uur een voetgangersgebied. De Eerste van Swindenstraat is een drukke winkelstraat binnen de bebouwde kom van de gemeente Amsterdam. Deze straat loopt dwars door het voetgangersgebied van de Dappermarkt. De toegestane snelheid op de Eerste van Swindenstraat is 30 kilometer per uur.</p>
-                <p class="bg-red-50 p-4 rounded-xl border-l-4 border-red-500 italic">
-                    Op het kruisingsvlak zie je een personenauto staan en zie je een man liggen op de voetgangersoversteekplaats (vop). Deze man is zichtbaar zwaar gewond. Je ziet veel bloed aan zijn rechterbeen. Hij is traag van begrip, kan eenvoudige vragen niet goed beantwoorden en weet niet meer wat er is gebeurd.
+            <h2 class="font-black uppercase text-xs text-police mb-4 border-b pb-2">Casus Informatie</h2>
+            <div class="space-y-4 text-sm leading-relaxed text-slate-700 italic">
+                De Dapperstraat is gedurende de dagmarkt van 06.00 en 19.00 uur een voetgangersgebied. De Eerste van Swindenstraat is een drukke winkelstraat binnen de bebouwde kom van Amsterdam en loopt dwars door het marktgebied. Max snelheid: 30 km/u.
+                <p class="bg-red-50 p-4 rounded-xl border-l-4 border-red-500 not-italic font-bold">
+                    Een man ligt zwaargewond op de VOP. Veel bloed aan rechterbeen. Hij is traag van begrip. Een zwarte VW Golf staat op het kruisingsvlak.
                 </p>
             </div>
         </section>
 
-        <section class="bg-slate-800 text-white p-6 rounded-2xl shadow-lg">
-            <h2 class="text-[10px] font-black uppercase text-yellow-400 mb-2">Melding OC</h2>
-            <p class="font-mono text-xs italic leading-relaxed">
-                "Wilt u gaan naar de Eerste van Swindenstraat te Amsterdam? Daar heeft, ter hoogte van de Dapperstraat, een ernstig verkeersongeval plaatsgevonden. Hierbij is een personenauto en een voetganger betrokken. Volgens de melder-getuige is de voetganger er slecht aan toe. Ambulance is aanrijdend en u krijgt toestemming voor het gebruik van optische en geluidssignalen. Denk aan uw eigen veiligheid."
-            </p>
-        </section>
-
         <section class="bg-yellow-50 border-2 border-yellow-400 p-6 rounded-2xl shadow-sm">
-            <h2 class="font-black uppercase text-sm mb-4 text-yellow-900">Deel 1: Stel uw DAA op</h2>
-            <textarea id="daaInput" class="w-full border-2 border-yellow-200 p-4 rounded-xl text-sm h-32 mb-4 outline-none focus:border-yellow-500" placeholder="Doel - Aanpak - Analyse..."></textarea>
+            <h2 class="font-black uppercase text-sm mb-4 text-yellow-900 italic">Stap 1: Stel een DAA op</h2>
+            <textarea id="daaInput" class="w-full border-2 border-yellow-200 p-4 rounded-xl text-sm h-32 mb-4 outline-none focus:border-yellow-500 shadow-inner" placeholder="Focus op Doel, Aanpak en Analyse..."></textarea>
             <button onclick="sendData('DAA', 'daaInput')" class="w-full bg-yellow-600 text-white py-3 rounded-xl font-black uppercase text-xs">Verstuur DAA naar livefeed</button>
         </section>
 
         <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="bg-white p-2 border-2 border-white rounded-xl shadow-md text-center">
-                <img src="casus530kmuur.png" alt="30 km" class="w-full h-32 object-cover rounded-lg mb-2 bg-slate-100">
-                <span class="text-[9px] uppercase font-black text-slate-500">casus530kmuur.png</span>
-            </div>
-            <div class="bg-white p-2 border-2 border-white rounded-xl shadow-md text-center">
-                <img src="casus5luchtfoto.png" alt="Luchtfoto" class="w-full h-32 object-cover rounded-lg mb-2 bg-slate-100">
-                <span class="text-[9px] uppercase font-black text-slate-500">casus5luchtfoto.png</span>
-            </div>
-            <div class="bg-white p-2 border-2 border-white rounded-xl shadow-md text-center">
-                <img src="casus5streetview.png" alt="Streetview" class="w-full h-32 object-cover rounded-lg mb-2 bg-slate-100">
-                <span class="text-[9px] uppercase font-black text-slate-500">casus5streetview.png</span>
-            </div>
-            <div class="bg-white p-2 border-2 border-white rounded-xl shadow-md text-center">
-                <img src="casus5terplaatse.png" alt="Ter Plaatse" class="w-full h-32 object-cover rounded-lg mb-2 bg-slate-100">
-                <span class="text-[9px] uppercase font-black text-slate-500">casus5terplaatse.png</span>
-            </div>
+            <img src="casus530kmuur.png" class="w-full h-32 object-cover rounded-xl border-2 border-white shadow-md bg-slate-200">
+            <img src="casus5luchtfoto.png" class="w-full h-32 object-cover rounded-xl border-2 border-white shadow-md bg-slate-200">
+            <img src="casus5streetview.png" class="w-full h-32 object-cover rounded-xl border-2 border-white shadow-md bg-slate-200">
+            <img src="casus5terplaatse.png" class="w-full h-32 object-cover rounded-xl border-2 border-white shadow-md bg-slate-200">
         </section>
 
         <section class="bg-white p-6 rounded-2xl shadow-md border border-slate-200">
-            <h2 class="font-black uppercase text-sm text-police mb-4 border-b pb-2">Getuigenverklaring</h2>
-            <p class="italic text-sm text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-xl">
-                "Ik liep zojuist over de Dapperstraat en wilde de Eerste van Swindenstraat via de voetgangersoversteekplaats oversteken. Ongeveer vijf meter voor mij liep een man. Ik zag dat hij inmiddels de voetgangersoversteekplaats was opgelopen. Tegelijkertijd zag ik een zwarte Volkswagen Golf met hoge snelheid aan komen rijden. Deze Volkswagen Golf reed over de Eerste van Swindenstraat komende uit de richting van de Pontanusstraat en rijdende in de richting van de Linneausstraat. Ik zag dat de bestuurder van deze auto geen vaart minderde bij het naderen van de voetgangersoversteekplaats. Ik zag dat deze auto met hoge snelheid de man aanreed die zich op dat moment op de voetgangersoversteekplaats bevond. Ik zag dat de man door deze aanrijding tegen het wegdek werd geworpen en daar gewond bleef liggen. Ik heb vervolgens de politie gebeld."
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <h2 class="font-black uppercase text-sm text-police">Getuigenverklaring</h2>
+                <button onclick="speakWitness()" class="bg-blue-600 hover:bg-blue-800 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase transition-all">Luister naar verklaring</button>
+            </div>
+            <p id="witnessText" class="italic text-sm text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100">
+                Ik liep zojuist over de Dapperstraat en wilde de Eerste van Swindenstraat via de voetgangersoversteekplaats oversteken. Ongeveer vijf meter voor mij liep een man. Ik zag dat hij inmiddels de voetgangersoversteekplaats was opgelopen. Tegelijkertijd zag ik een zwarte Volkswagen Golf met hoge snelheid aan komen rijden uit de richting van de Pontanusstraat. De bestuurder minderde geen vaart en reed de man vol aan. De man werd door deze aanrijding tegen het wegdek geworpen en bleef gewond liggen. Ik heb vervolgens direct de politie gebeld.
             </p>
         </section>
 
-        <section class="bg-white p-8 rounded-3xl shadow-police border-t-8 border-police space-y-6">
-            <h2 class="font-black uppercase text-xl text-police italic">Deel 2: PV van Bevindingen</h2>
+        <section class="bg-white p-8 rounded-3xl shadow-2xl border-t-8 border-police space-y-6">
+            <h2 class="font-black uppercase text-xl text-police italic tracking-tighter">Stap 2: PV van Bevindingen</h2>
             
-            <div class="bg-blue-900 text-white p-5 rounded-2xl shadow-inner">
-                <h3 class="font-black uppercase text-xs mb-3 text-yellow-400">Sporen PD (Vastleggen in verslag):</h3>
-                <ul class="text-[11px] font-bold space-y-2">
-                    <li>Spoor 1: Remsleep van 12 meter op het wegdek.</li>
-                    <li>Spoor 2: Concentratie bloed op de VOP-strepen.</li>
-                    <li>Spoor 3: Glasdeeltjes van koplamp rechterzijde.</li>
+            <div class="bg-blue-900 text-white p-5 rounded-2xl">
+                <h3 class="font-black uppercase text-[10px] mb-3 text-yellow-400 tracking-widest">Nieuwe Sporen PD (VOA):</h3>
+                <ul class="text-[11px] font-bold space-y-2 opacity-90">
+                    <li>Spoor 1: Een remsleep van ca. 12 meter op het asfalt.</li>
+                    <li>Spoor 2: Bloedspoor gecentreerd op de VOP-markering.</li>
+                    <li>Spoor 3: Glasfragmenten van een defecte koplamp (rechterzijde).</li>
                 </ul>
             </div>
 
             <div class="grid md:grid-cols-2 gap-8">
                 <div class="space-y-4">
-                    <div class="bg-slate-50 p-5 rounded-2xl border-2 border-slate-100 font-bold text-[11px] text-slate-600 space-y-3">
-                        <p class="text-red-700 uppercase">Aandachtspunten:</p>
-                        <p>1. Van welk strafbaar feit zou hier sprake kunnen zijn?</p>
-                        <p>2. Beschrijving kaal en veranderlijk decor (Welke sporen?).</p>
-                        <p>3. Hoe stel je de sporen veilig?</p>
-                        <p>4. Hoe handel je de pers af bij het afzetlint?</p>
+                    <div class="bg-slate-50 p-5 rounded-2xl border-2 border-slate-100 font-bold text-[11px] text-slate-500">
+                        <p class="text-blue-900 uppercase font-black mb-3">Instructies:</p>
+                        <p class="mb-2">1. Noteer feiten in redenen van wetenschap.</p>
+                        <p class="mb-2">2. Benoem het strafbare feit.</p>
+                        <p class="mb-2">3. Beschrijf decor en sporen PD.</p>
+                        <p>4. Leg uit hoe je de sporen hebt veiliggesteld.</p>
                     </div>
                 </div>
                 <div class="flex flex-col">
-                    <textarea id="pvInput" class="w-full flex-grow border-2 border-slate-200 p-5 rounded-2xl text-sm min-h-[300px] outline-none focus:border-police" placeholder="Schrijf hier je PV van bevindingen..."></textarea>
-                    <button onclick="sendData('PV Bevindingen', 'pvInput')" class="mt-4 bg-police text-white py-4 rounded-xl font-black uppercase text-xs italic shadow-lg">Inleveren PV</button>
+                    <textarea id="pvInput" class="w-full flex-grow border-2 border-slate-200 p-6 rounded-2xl text-sm min-h-[400px] outline-none focus:border-police shadow-inner font-mono" placeholder="Begin uw PV hier..."></textarea>
+                    <button onclick="sendData('PV Bevindingen', 'pvInput')" class="mt-4 bg-police text-white py-4 rounded-xl font-black uppercase text-xs italic tracking-widest shadow-xl">Verstuur definitief PV</button>
                 </div>
             </div>
         </section>
 
-        <section class="bg-white p-6 rounded-2xl border-2 border-dashed border-slate-300">
-            <h2 class="font-black uppercase text-[10px] text-slate-400 mb-4 tracking-widest text-center">Docenten Checklist</h2>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-[10px] font-bold uppercase text-slate-500">
-                <label class="flex items-center gap-2"><input type="checkbox"> Artikel 6 WVW</label>
-                <label class="flex items-center gap-2"><input type="checkbox"> Afzetting t.b.v. VOA</label>
-                <label class="flex items-center gap-2"><input type="checkbox"> METHANE protocol</label>
-                <label class="flex items-center gap-2"><input type="checkbox"> Journalist geweigerd</label>
-                <label class="flex items-center gap-2"><input type="checkbox"> Sporen gemarkeerd</label>
-                <label class="flex items-center gap-2"><input type="checkbox"> Actieve verleden tijd</label>
-            </div>
-        </section>
-
-        <section class="mt-10">
-            <h2 class="text-center font-black uppercase text-xs text-blue-900 mb-6 tracking-widest italic">Live Feed Eenheidspagina</h2>
+        <section>
+            <h2 class="text-center font-black uppercase text-xs text-slate-400 mb-6 tracking-widest italic">Live Feed - Ingezonden Werk</h2>
             <div id="liveFeed" class="max-w-3xl mx-auto"></div>
         </section>
 
