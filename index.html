@@ -1,1 +1,207 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BTV Dashboard - Casus 5: Swindenstraat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, serverTimestamp, collection, addDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        const firebaseConfig = {
+            apiKey: "AIzaSyBRq1HFmhrpW_EMMZwpURrbTArz-L5iWT4",
+            authDomain: "pvaangifteinleveren-77dbe.firebaseapp.com",
+            projectId: "pvaangifteinleveren-77dbe",
+            storageBucket: "pvaangifteinleveren-77dbe.firebasestorage.app",
+            messagingSenderId: "20239054410",
+            appId: "1:20239054410:web:264b3c759312248d9f18b3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const LES_ID = "btv_q2_l2_casus5_v2_1";
+
+        window.startLes = () => {
+            const naam = document.getElementById('uNaam').value.trim();
+            const klas = document.getElementById('uKlas').value;
+            if(!naam || !klas) return alert("Vul je voornaam en eenheid in.");
+            document.getElementById('loginOverlay').style.display='none';
+            document.getElementById('mainContent').classList.remove('hidden');
+            document.getElementById('displayKlas').innerText = klas;
+            initLive(klas, naam);
+        };
+
+        async function initLive(klas, naam) {
+            const q = query(collection(db, "btv_2026"), where("klas", "==", klas), orderBy("ts", "desc"));
+            onSnapshot(q, (sn) => {
+                const feed = document.getElementById('liveFeed');
+                feed.innerHTML = "";
+                sn.forEach(d => {
+                    const data = d.data();
+                    const card = `
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-4">
+                            <div class="bg-slate-100 px-4 py-2 border-b flex justify-between items-center text-[10px]">
+                                <span class="font-black text-blue-900 uppercase">${data.naam}</span>
+                                <span class="bg-blue-900 text-white px-2 py-0.5 rounded-full font-bold uppercase">${data.type}</span>
+                            </div>
+                            <div class="p-4 text-sm italic text-slate-700 leading-relaxed whitespace-pre-wrap">"${data.txt}"</div>
+                        </div>`;
+                    feed.innerHTML += card;
+                });
+            });
+        }
+
+        window.sendData = async (type, elementId) => {
+            const txt = document.getElementById(elementId).value;
+            const naam = document.getElementById('uNaam').value;
+            const klas = document.getElementById('uKlas').value;
+            if(!txt) return alert("Veld is leeg.");
+            
+            await addDoc(collection(db, "btv_2026"), { 
+                naam, klas, type, txt, ts: serverTimestamp()
+            });
+            alert(type + " is succesvol verzonden!");
+        };
+    </script>
+
+    <style>
+        .bg-police { background-color: #002d5e; }
+        .text-police { color: #002d5e; }
+        .border-police { border-color: #002d5e; }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans pb-20">
+
+    <div id="loginOverlay" class="fixed inset-0 bg-police z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md border-t-8 border-yellow-500">
+            <h1 class="font-black text-2xl mb-2 text-police uppercase italic tracking-tight">Casus 5: Amsterdam</h1>
+            <p class="text-[10px] text-slate-500 mb-6 font-bold uppercase">Incidentmanagement & PV Bevindingen</p>
+            <input type="text" id="uNaam" placeholder="Voornaam" class="w-full border-2 p-4 rounded-xl mb-4 font-bold text-center focus:border-blue-500 outline-none">
+            <select id="uKlas" class="w-full border-2 p-4 rounded-xl mb-8 font-bold text-center focus:border-blue-500 outline-none">
+                <option value="">-- Kies Eenheid --</option>
+                <option>Delta</option><option>Echo</option><option>Foxtrot</option><option>Lima</option><option>Mike</option>
+            </select>
+            <button onclick="startLes()" class="w-full bg-police text-white p-5 rounded-xl font-black uppercase tracking-widest hover:bg-blue-900 transition-colors">Start Dashboard</button>
+        </div>
+    </div>
+
+    <div id="mainContent" class="hidden max-w-5xl mx-auto p-4 space-y-8">
+        
+        <header class="bg-police text-white p-6 rounded-2xl shadow-xl flex justify-between items-center border-b-4 border-yellow-500">
+            <div>
+                <h1 class="font-black italic uppercase text-xl">BTV Dashboard 2026</h1>
+                <p class="text-[10px] text-yellow-400 font-bold uppercase">Eenheid: <span id="displayKlas"></span></p>
+            </div>
+            <div class="text-right hidden md:block">
+                <p class="text-[9px] font-bold uppercase opacity-70">Locatie: Amsterdam-Oost</p>
+                <p class="text-[9px] font-bold uppercase opacity-70">Incident: Aanrijding VOP</p>
+            </div>
+        </header>
+
+        <div class="grid md:grid-cols-3 gap-6">
+            <section class="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="font-black uppercase text-xs text-police mb-4 border-b pb-2">📍 Situatieomschrijving & Context</h2>
+                <div class="space-y-4 text-sm leading-relaxed text-slate-700">
+                    <p>De <b>Dapperstraat</b> is tussen 06:00 en 19:00 uur een voetgangersgebied (markt). De <b>Eerste van Swindenstraat</b> (max. 30 km/u) loopt hier dwars doorheen. </p>
+                    <p class="bg-red-50 p-4 rounded-xl border-l-4 border-red-500 italic">
+                        Op de VOP ligt een man met zwaar letsel aan zijn rechterbeen (veel bloedverlies). Hij is gedesoriënteerd en traag. Een zwarte VW Golf staat op het kruisingsvlak.
+                    </p>
+                </div>
+            </section>
+
+            <section class="bg-slate-800 text-white p-6 rounded-2xl shadow-lg flex flex-col justify-center">
+                <h2 class="text-[10px] font-black uppercase text-yellow-400 mb-2">📻 Melding OC</h2>
+                <p class="font-mono text-[11px] italic leading-relaxed">
+                    “Eerste van Swindenstraat Amsterdam. Ernstig ongeval auto-voetganger. Voetganger slecht aan toe. Ambulance aanrijdend. U heeft toestemming O&G.”
+                </p>
+            </section>
+        </div>
+
+        <section class="bg-yellow-400 p-1 rounded-2xl shadow-lg">
+            <div class="bg-white p-6 rounded-xl">
+                <h2 class="font-black uppercase text-sm mb-4 text-slate-800">Stap 1: Jouw DAA (Doel-Aanpak-Analyse)</h2>
+                <textarea id="daaInput" class="w-full bg-slate-50 border-2 border-slate-200 p-4 rounded-xl text-sm h-32 mb-4 focus:border-yellow-500 outline-none" placeholder="Wat is je plan van aanpak bij aankomst? Denk aan veiligheid, medische hulp en de markt-context..."></textarea>
+                <button onclick="sendData('DAA', 'daaInput')" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black uppercase text-xs hover:bg-black transition-all">Deel DAA met de klas</button>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <h2 class="font-black uppercase text-xs text-slate-500 tracking-widest text-center">Visualisatie & PD Sporen</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="group relative overflow-hidden rounded-xl border-2 border-white shadow-md aspect-video bg-slate-300 flex items-center justify-center text-[10px] font-bold uppercase p-2 text-center">casus530kmuur.png</div>
+                <div class="group relative overflow-hidden rounded-xl border-2 border-white shadow-md aspect-video bg-slate-300 flex items-center justify-center text-[10px] font-bold uppercase p-2 text-center">casus5luchtfoto.png</div>
+                <div class="group relative overflow-hidden rounded-xl border-2 border-white shadow-md aspect-video bg-slate-300 flex items-center justify-center text-[10px] font-bold uppercase p-2 text-center">casus5streetview.png</div>
+                <div class="group relative overflow-hidden rounded-xl border-2 border-white shadow-md aspect-video bg-slate-300 flex items-center justify-center text-[10px] font-bold uppercase p-2 text-center">casus5terplaatse.png</div>
+            </div>
+            
+            <div class="bg-blue-900 text-white p-6 rounded-2xl shadow-xl">
+                <h3 class="font-black uppercase text-xs mb-3 text-yellow-400">🔍 Gevonden Sporen (Vastleggen in PV!):</h3>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="bg-white/10 p-3 rounded-lg border border-white/20">
+                        <p class="text-[10px] font-black uppercase opacity-60">Spoor A</p>
+                        <p class="text-xs font-bold">Remsleep van 12 meter op het wegdek.</p>
+                    </div>
+                    <div class="bg-white/10 p-3 rounded-lg border border-white/20">
+                        <p class="text-[10px] font-black uppercase opacity-60">Spoor B</p>
+                        <p class="text-xs font-bold">Concentratie bloed exact op de VOP-strepen.</p>
+                    </div>
+                    <div class="bg-white/10 p-3 rounded-lg border border-white/20">
+                        <p class="text-[10px] font-black uppercase opacity-60">Spoor C</p>
+                        <p class="text-xs font-bold">Glasdeeltjes van koplamp rechterzijde.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white p-8 rounded-3xl shadow-police border-t-8 border-police space-y-6">
+            <div class="flex justify-between items-end">
+                <h2 class="font-black uppercase text-2xl text-police italic tracking-tighter">Proces-Verbaal</h2>
+                <span class="text-[10px] font-bold text-slate-400 uppercase">Individuele Opdracht</span>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="space-y-4">
+                    <div class="bg-slate-50 p-5 rounded-2xl border-2 border-slate-100">
+                        <h3 class="font-black text-xs uppercase mb-3">Aandachtspunten:</h3>
+                        <ul class="text-[11px] space-y-3 font-bold text-slate-600">
+                            <li class="flex gap-2 text-red-700"><span>🚨</span> JURIDISCH: Welk strafbaar feit? (Art. 5 of 6 WVW?)</li>
+                            <li class="flex gap-2"><span>🏠</span> DECOR: Beschrijf kaal (omgeving) vs veranderlijk (auto/sporen).</li>
+                            <li class="flex gap-2 text-blue-700"><span>🛡️</span> VEILIGSTELLEN: Hoe bescherm je sporen A, B en C tegen publiek/regen?</li>
+                            <li class="flex gap-2"><span>📸</span> PERS: Hoe handel je de journalist met perskaart af?</li>
+                        </ul>
+                    </div>
+                    <div class="bg-slate-100 p-4 rounded-xl italic text-[11px] leading-relaxed border-l-4 border-slate-300">
+                        "Ik liep op de Dapperstraat... zag een zwarte Golf met hoge snelheid... de man werd tegen het wegdek geworpen..." - Getuige
+                    </div>
+                </div>
+
+                <div class="flex flex-col">
+                    <textarea id="pvInput" class="w-full flex-grow border-2 border-slate-200 p-6 rounded-2xl text-sm font-mono min-h-[400px] focus:border-police outline-none shadow-inner" placeholder="Ik, [Voornaam], verbalisant van politie eenheid [Klas]..."></textarea>
+                    <button onclick="sendData('PV Bevindingen', 'pvInput')" class="mt-4 bg-police text-white py-4 rounded-xl font-black uppercase text-xs shadow-lg hover:bg-blue-900 transition-all italic">Verstuur PV naar de Livefeed</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white p-6 rounded-2xl border-2 border-dashed border-slate-300 opacity-80 hover:opacity-100 transition-opacity">
+            <h2 class="font-black uppercase text-[10px] text-slate-400 mb-4 tracking-widest italic">Docenten-Checklist (Nabespreking)</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div class="flex items-center gap-2 text-[10px] font-bold"><input type="checkbox"> Art. 6 WVW (Schuld)</div>
+                <div class="flex items-center gap-2 text-[10px] font-bold"><input type="checkbox"> METHANE doorgegeven</div>
+                <div class="flex items-center gap-2 text-[10px] font-bold"><input type="checkbox"> Afzetting t.b.v. VOA</div>
+                <div class="flex items-center gap-2 text-[10px] font-bold"><input type="checkbox"> Journalist geweigerd op PD</div>
+                <div class="flex items-center gap-2 text-[10px] font-bold"><input type="checkbox"> Sporen veiliggesteld (pylonen)</div>
+                <div class="flex items-center gap-2 text-[10px] font-bold"><input type="checkbox"> Gebruik Ik-vorm/OVT</div>
+            </div>
+        </section>
+
+        <section class="pt-10 border-t-2 border-slate-200">
+            <h2 class="text-center font-black uppercase text-xs text-blue-900 mb-6 tracking-widest">Live Klasoverzicht</h2>
+            <div id="liveFeed" class="max-w-3xl mx-auto"></div>
+        </section>
+
+    </div>
+
+</body>
+</html>
