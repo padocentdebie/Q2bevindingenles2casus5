@@ -45,7 +45,6 @@
         };
 
         async function initLive(klas) {
-            // Filtert de feed specifiek op de gekozen NATO-klas
             const q = query(collection(db, "btv_2026"), where("klas", "==", klas), orderBy("ts", "desc"));
             onSnapshot(q, (sn) => {
                 const feed = document.getElementById('liveFeed');
@@ -75,8 +74,10 @@
                 naam, klas, type, txt, ts: serverTimestamp()
             });
 
+            document.getElementById(elementId).value = ""; // Veld leegmaken na verzenden
+
             if(type === 'PV Bevindingen') {
-                alert("Systeemmelding: PV opgeslagen en gedeeld in de livefeed van eenheid " + klas);
+                alert("Systeemmelding: PV opgeslagen in livefeed van eenheid " + klas);
             } else {
                 alert(type + " verzonden naar livefeed.");
             }
@@ -90,7 +91,6 @@
         @media print {
             .no-print { display: none; }
             #mainContent { width: 100%; padding: 0; }
-            .print-only { display: block; }
         }
     </style>
 </head>
@@ -111,7 +111,7 @@
 
     <div id="mainContent" class="hidden max-w-5xl mx-auto p-4 space-y-8">
         
-        <header class="bg-police text-white p-6 rounded-2xl shadow-xl flex justify-between items-center border-b-4 border-yellow-500">
+        <header class="bg-police text-white p-6 rounded-2xl shadow-xl flex justify-between items-center border-b-4 border-yellow-500 no-print">
             <div>
                 <h1 class="font-black italic uppercase text-xl">Proces-Verbaal Dashboard 2026</h1>
                 <p class="text-[10px] text-yellow-400 font-bold uppercase tracking-widest">Eenheid: <span id="displayKlas"></span></p>
@@ -120,15 +120,15 @@
 
         <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
             <h2 class="font-black uppercase text-xs text-police mb-4 border-b pb-2">Context</h2>
-            <div class="text-sm leading-relaxed text-slate-700 space-y-4">
+            <div class="text-sm leading-relaxed text-slate-700 space-y-4 italic">
                 <p>Eerste van Swindenstraat Amsterdam (30 km/u). Kruising Dapperstraat (voetgangersgebied 06.00-19.00 uur).</p>
-                <p class="bg-red-50 p-4 rounded-xl border-l-4 border-red-500 font-bold">Zwaargewonde man op VOP. Veel bloed aan rechterbeen. Zwarte VW Golf op kruisingsvlak.</p>
+                <p class="bg-red-50 p-4 rounded-xl border-l-4 border-red-500 font-bold not-italic">Zwaargewonde man op VOP. Veel bloed aan rechterbeen. Zwarte VW Golf op kruisingsvlak.</p>
             </div>
         </section>
 
-        <section class="bg-yellow-50 border-2 border-yellow-400 p-6 rounded-2xl no-print">
+        <section class="bg-yellow-50 border-2 border-yellow-400 p-6 rounded-2xl no-print shadow-sm">
             <h2 class="font-black uppercase text-sm mb-4 text-yellow-900">1. DAA Opstellen</h2>
-            <textarea id="daaInput" class="w-full border-2 border-yellow-200 p-4 rounded-xl text-sm h-32 mb-4 outline-none focus:border-yellow-500" placeholder="Beschrijf je plan van aanpak..."></textarea>
+            <textarea id="daaInput" class="w-full border-2 border-yellow-200 p-4 rounded-xl text-sm h-32 mb-4 outline-none focus:border-yellow-500 shadow-inner" placeholder="Beschrijf je plan van aanpak..."></textarea>
             <button onclick="sendData('DAA', 'daaInput')" class="w-full bg-yellow-600 text-white py-3 rounded-xl font-black uppercase text-xs">Deel DAA met klas</button>
         </section>
 
@@ -142,34 +142,40 @@
         <section class="bg-white p-6 rounded-2xl shadow-md border border-slate-200 no-print">
             <div class="flex justify-between items-center mb-4 border-b pb-2">
                 <h2 class="font-black uppercase text-sm text-police">Getuigenverklaring</h2>
-                <button onclick="speakWitness()" class="bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase">Luister Audio</button>
+                <button onclick="speakWitness()" class="bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase shadow-md transition-all hover:bg-blue-800">Luister Audio</button>
             </div>
-            <p id="witnessText" class="italic text-sm text-slate-700 bg-slate-50 p-4 rounded-xl">
+            <p id="witnessText" class="italic text-sm text-slate-700 bg-slate-50 p-4 rounded-xl leading-relaxed">
                 Ik liep over de Dapperstraat. Een man liep vijf meter voor mij op de oversteekplaats. Een zwarte VW Golf kwam met hoge snelheid aanrijden vanuit de Pontanusstraat en minderde geen vaart. De man werd vol geraakt en tegen het wegdek geworpen.
             </p>
         </section>
 
         <section class="bg-white p-8 rounded-3xl shadow-2xl border-t-8 border-police space-y-6">
-            <div class="flex justify-between items-center">
+            <div class="flex justify-between items-center border-b pb-2">
                 <h2 class="font-black uppercase text-xl text-police italic tracking-tighter">2. PV van Bevindingen</h2>
-                <button onclick="generatePDF()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-black uppercase text-[10px] no-print">Download als PDF</button>
+                <button onclick="generatePDF()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-black uppercase text-[10px] no-print hover:bg-black transition-all">Download als PDF</button>
             </div>
             
-            <div class="bg-blue-900 text-white p-5 rounded-2xl text-[11px] font-bold">
+            <div class="bg-blue-900 text-white p-5 rounded-2xl text-[11px] font-bold leading-relaxed">
                 AANVULLENDE SPOREN VOOR PV:<br>
                 - Remsleep van 12 meter op het wegdek.<br>
                 - Bloedspoor exact op de strepen van de VOP.<br>
                 - Glasfragmenten koplamp rechterzijde auto.
             </div>
 
-            <textarea id="pvInput" class="w-full border-2 border-slate-200 p-6 rounded-2xl text-sm min-h-[400px] outline-none focus:border-police font-mono" placeholder="Typ hier het Proces-Verbaal..."></textarea>
+            <textarea id="pvInput" class="w-full border-2 border-slate-200 p-6 rounded-2xl text-sm min-h-[400px] outline-none focus:border-police font-mono shadow-inner" placeholder="Typ hier het Proces-Verbaal conform de redenen van wetenschap..."></textarea>
             
             <div class="no-print space-y-4">
-                <button onclick="sendData('PV Bevindingen', 'pvInput')" class="w-full bg-police text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest italic">Verstuur naar livefeed</button>
+                <button onclick="sendData('PV Bevindingen', 'pvInput')" class="w-full bg-police text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest italic shadow-xl transition-all hover:bg-blue-900">Verstuur naar livefeed</button>
             </div>
         </section>
 
-        <section class="no-print">
+        <section class="bg-slate-200 p-6 rounded-2xl no-print border-2 border-slate-300">
+            <h2 class="font-black uppercase text-sm mb-4 text-slate-700">3. Feedback over de Casus</h2>
+            <textarea id="feedbackInput" class="w-full border-2 border-slate-300 p-4 rounded-xl text-sm h-24 mb-4 outline-none focus:border-slate-500 shadow-inner" placeholder="Laat hier je feedback achter voor de docent..."></textarea>
+            <button onclick="sendData('Feedback', 'feedbackInput')" class="w-full bg-slate-600 text-white py-3 rounded-xl font-black uppercase text-xs hover:bg-slate-800 transition-all">Verstuur Feedback</button>
+        </section>
+
+        <section class="no-print pt-10">
             <h2 class="text-center font-black uppercase text-[10px] text-slate-400 mb-6 tracking-widest italic border-b pb-2">
                 Livefeed Overzicht: Eenheid <span id="displayKlasFeed"></span>
             </h2>
