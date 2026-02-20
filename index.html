@@ -21,6 +21,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        let synth = window.speechSynthesis;
 
         window.startLes = () => {
             const naam = document.getElementById('uNaam').value.trim();
@@ -33,16 +34,22 @@
             initLive(klas);
         };
 
+        // Audio Functies
         window.speakWitness = () => {
-            const text = document.getElementById('witnessText').innerText;
-            const msg = new SpeechSynthesisUtterance(text);
-            msg.lang = 'nl-NL';
-            window.speechSynthesis.speak(msg);
+            if (synth.paused) {
+                synth.resume();
+            } else {
+                synth.cancel();
+                const text = document.getElementById('witnessText').innerText;
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'nl-NL';
+                synth.speak(utterance);
+            }
         };
+        window.pauseWitness = () => { if (synth.speaking) synth.pause(); };
+        window.stopWitness = () => { synth.cancel(); };
 
-        window.generatePDF = () => {
-            window.print();
-        };
+        window.generatePDF = () => { window.print(); };
 
         async function initLive(klas) {
             const q = query(collection(db, "btv_2026"), where("klas", "==", klas), orderBy("ts", "desc"));
@@ -51,15 +58,15 @@
                 feed.innerHTML = "";
                 sn.forEach(d => {
                     const data = d.data();
-                    const card = `
+                    let color = data.type === 'Feedback' ? 'bg-slate-500' : (data.type === 'DAA' ? 'bg-yellow-600' : 'bg-blue-900');
+                    feed.innerHTML += `
                         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-4 break-inside-avoid">
                             <div class="bg-slate-100 px-4 py-2 border-b flex justify-between items-center text-[10px]">
                                 <span class="font-black text-blue-900 uppercase">${data.naam}</span>
-                                <span class="bg-blue-900 text-white px-2 py-0.5 rounded-full font-bold uppercase">${data.type}</span>
+                                <span class="${color} text-white px-2 py-0.5 rounded-full font-bold uppercase">${data.type}</span>
                             </div>
                             <div class="p-4 text-sm italic text-slate-700 leading-relaxed whitespace-pre-wrap">${data.txt}</div>
                         </div>`;
-                    feed.innerHTML += card;
                 });
             });
         }
@@ -69,29 +76,16 @@
             const naam = document.getElementById('uNaam').value;
             const klas = document.getElementById('uKlas').value;
             if(!txt) return alert("Veld is leeg.");
-            
-            await addDoc(collection(db, "btv_2026"), { 
-                naam, klas, type, txt, ts: serverTimestamp()
-            });
-
-            document.getElementById(elementId).value = ""; // Veld leegmaken na verzenden
-
-            if(type === 'PV Bevindingen') {
-                alert("Systeemmelding: PV opgeslagen in livefeed van eenheid " + klas);
-            } else {
-                alert(type + " verzonden naar livefeed.");
-            }
+            await addDoc(collection(db, "btv_2026"), { naam, klas, type, txt, ts: serverTimestamp() });
+            document.getElementById(elementId).value = "";
+            alert(type + " verzonden naar de livefeed.");
         };
     </script>
 
     <style>
         .bg-police { background-color: #002d5e; }
         .text-police { color: #002d5e; }
-        .border-police { border-color: #002d5e; }
-        @media print {
-            .no-print { display: none; }
-            #mainContent { width: 100%; padding: 0; }
-        }
+        @media print { .no-print { display: none; } }
     </style>
 </head>
 <body class="bg-slate-100 font-sans pb-20">
@@ -100,49 +94,51 @@
         <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md border-t-8 border-yellow-500">
             <h1 class="font-black text-2xl mb-2 text-police uppercase italic text-center">BTV Dashboard Inlog</h1>
             <p class="text-[10px] text-slate-500 mb-6 font-bold uppercase text-center">Amsterdam - Casus 5</p>
-            <input type="text" id="uNaam" placeholder="Voornaam" class="w-full border-2 p-4 rounded-xl mb-4 font-bold text-center focus:border-blue-500 outline-none">
-            <select id="uKlas" class="w-full border-2 p-4 rounded-xl mb-8 font-bold text-center focus:border-blue-500 outline-none">
+            <input type="text" id="uNaam" placeholder="Voornaam" class="w-full border-2 p-4 rounded-xl mb-4 font-bold text-center outline-none">
+            <select id="uKlas" class="w-full border-2 p-4 rounded-xl mb-8 font-bold text-center outline-none">
                 <option value="">-- Kies NATO Eenheid --</option>
                 <option>Delta</option><option>Echo</option><option>Foxtrot</option><option>Lima</option><option>Mike</option>
             </select>
-            <button onclick="startLes()" class="w-full bg-police text-white p-5 rounded-xl font-black uppercase tracking-widest transition-colors hover:bg-blue-900">Start Sessie</button>
+            <button onclick="startLes()" class="w-full bg-police text-white p-5 rounded-xl font-black uppercase tracking-widest">Start Sessie</button>
         </div>
     </div>
 
     <div id="mainContent" class="hidden max-w-5xl mx-auto p-4 space-y-8">
         
         <header class="bg-police text-white p-6 rounded-2xl shadow-xl flex justify-between items-center border-b-4 border-yellow-500 no-print">
-            <div>
-                <h1 class="font-black italic uppercase text-xl">Proces-Verbaal Dashboard 2026</h1>
-                <p class="text-[10px] text-yellow-400 font-bold uppercase tracking-widest">Eenheid: <span id="displayKlas"></span></p>
-            </div>
+            <h1 class="font-black italic uppercase text-xl">Proces-Verbaal Dashboard 2026</h1>
+            <p class="text-[10px] text-yellow-400 font-bold uppercase tracking-widest">Eenheid: <span id="displayKlas"></span></p>
         </header>
 
         <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-            <h2 class="font-black uppercase text-xs text-police mb-4 border-b pb-2">Melding Operationeel Centrum: </h2>
+            <h2 class="font-black uppercase text-xs text-police mb-4 border-b pb-2">Melding Operationeel Centrum:</h2>
             <div class="text-sm leading-relaxed text-slate-700 space-y-4 italic">
                 <p>“Wilt u gaan naar de Eerste van Swindenstraat te Amsterdam? Daar heeft, ter hoogte van de Dapperstraat, een ernstig verkeersongeval plaatsgevonden. Hierbij is een personenauto en een voetganger betrokken. Volgens de melder/getuige is de voetganger er slecht aan toe. Ambulance is aanrijdend en u krijgt toestemming voor het gebruik van optische en geluidssignalen. Denk aan uw eigen veiligheid.”Mw</p>
-                <p class="bg-red-50 p-4 rounded-xl border-l-4 border-red-500 font-bold not-italic">Zwaargewonde man op VoetgangersOversteekPlaats. Veel bloed aan rechterbeen. Zwarte VW Golf op kruisingsvlak.</p>
+                <p class="bg-red-50 p-4 rounded-xl border-l-4 border-red-500 font-bold not-italic text-red-700">Zwaargewonde man op VoetgangersOversteekPlaats. Veel bloed aan rechterbeen. Zwarte VW Golf op kruisingsvlak.</p>
             </div>
         </section>
 
         <section class="bg-yellow-50 border-2 border-yellow-400 p-6 rounded-2xl no-print shadow-sm">
             <h2 class="font-black uppercase text-sm mb-4 text-yellow-900">1. DAA Opstellen</h2>
-            <textarea id="daaInput" class="w-full border-2 border-yellow-200 p-4 rounded-xl text-sm h-32 mb-4 outline-none focus:border-yellow-500 shadow-inner" placeholder="Beschrijf je plan van aanpak..."></textarea>
-            <button onclick="sendData('DAA', 'daaInput')" class="w-full bg-yellow-600 text-white py-3 rounded-xl font-black uppercase text-xs">Deel DAA met klas</button>
+            <textarea id="daaInput" class="w-full border-2 border-yellow-200 p-4 rounded-xl text-sm h-32 mb-4 outline-none" placeholder="Doel, Aanpak, Analyse..."></textarea>
+            <button onclick="sendData('DAA', 'daaInput')" class="w-full bg-yellow-600 text-white py-3 rounded-xl font-black uppercase text-xs">Verstuur DAA</button>
         </section>
 
         <section class="grid grid-cols-2 md:grid-cols-4 gap-4 no-print">
-            <img src="casus530kmuur.png" class="w-full h-32 object-cover rounded-xl border-2 border-white shadow-md bg-slate-200" alt="Spoor">
-            <img src="casus5luchtfoto.png" class="w-full h-32 object-cover rounded-xl border-2 border-white shadow-md bg-slate-200" alt="Spoor">
-            <img src="casus5streetview.png" class="w-full h-32 object-cover rounded-xl border-2 border-white shadow-md bg-slate-200" alt="Spoor">
-            <img src="casus5terplaatse.png" class="w-full h-32 object-cover rounded-xl border-2 border-white shadow-md bg-slate-200" alt="Spoor">
+            <img src="casus530kmuur.png" class="w-full h-32 object-cover rounded-xl border-2 border-white shadow-md bg-slate-200">
+            <img src="casus5luchtfoto.png" class="w-full h-32 object-cover rounded-xl border-2 border-white shadow-md bg-slate-200">
+            <img src="casus5streetview.png" class="w-full h-32 object-cover rounded-xl border-2 border-white shadow-md bg-slate-200">
+            <img src="casus5terplaatse.png" class="w-full h-32 object-cover rounded-xl border-2 border-white shadow-md bg-slate-200">
         </section>
 
         <section class="bg-white p-6 rounded-2xl shadow-md border border-slate-200 no-print">
             <div class="flex justify-between items-center mb-4 border-b pb-2">
                 <h2 class="font-black uppercase text-sm text-police">Getuigenverklaring</h2>
-                <button onclick="speakWitness()" class="bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase shadow-md transition-all hover:bg-blue-800">Luister getuigeverklaring</button>
+                <div class="flex gap-2">
+                    <button onclick="speakWitness()" class="bg-green-600 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase shadow-sm">Speel af</button>
+                    <button onclick="pauseWitness()" class="bg-yellow-500 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase shadow-sm">Pauze</button>
+                    <button onclick="stopWitness()" class="bg-red-600 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase shadow-sm">Stop</button>
+                </div>
             </div>
             <p id="witnessText" class="italic text-sm text-slate-700 bg-slate-50 p-4 rounded-xl leading-relaxed">
                 "Ik liep net over de Dapperstraat en wilde de Eerste van Swindenstraat via de voetgangersoversteekplaats oversteken. Ongeveer vijf meter voor mij liep een man. Ik zag dat hij al de voetgangersoversteekplaats was opgelopen. Op hetzelfde moment zag ik een zwarte Volkswagen Golf met hoge snelheid aan komen rijden. Deze Volkswagen Golf reed over de Eerste van Swindenstraat komende uit de richting van de Pontanusstraat en reed in de richting van de Linneausstraat. Ik zag dat de bestuurder van deze auto geen vaart minderde bij het naderen van de voetgangersoversteekplaats. Ik zag dat deze auto met hoge snelheid de man aanreed die zich op dat moment op de voetgangersoversteekplaats bevond. Ik zag dat de man door deze aanrijding tegen het wegdek werd geworpen en daar gewond bleef liggen. Vervolgens belde ik de politie."
@@ -152,38 +148,29 @@
         <section class="bg-white p-8 rounded-3xl shadow-2xl border-t-8 border-police space-y-6">
             <div class="flex justify-between items-center border-b pb-2">
                 <h2 class="font-black uppercase text-xl text-police italic tracking-tighter">2. PV van Bevindingen</h2>
-                <button onclick="generatePDF()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-black uppercase text-[10px] no-print hover:bg-black transition-all">Download als PDF</button>
+                <button onclick="generatePDF()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-black uppercase text-[10px] no-print">PDF Export</button>
             </div>
-            
-            <div class="bg-blue-900 text-white p-5 rounded-2xl text-[11px] font-bold leading-relaxed">
-                AANVULLENDE SPOREN VOOR PV:<br>
-                - Remsleep van 12 meter op het wegdek.<br>
-                - Bloedspoor exact op de strepen van de VOP.<br>
-                - Glasfragmenten koplamp rechterzijde auto.<br>
-                - Koplampglas rechterzijde auto zwaar beschadigd. .<br>
+            <div class="bg-blue-900 text-white p-5 rounded-2xl text-[11px] font-bold space-y-1">
+                <p>- Remsleep van 12 meter op het wegdek.</p>
+                <p>- Bloedspoor exact op de strepen van de VOP.</p>
+                <p>- Glasfragmenten koplamp rechterzijde auto.</p>
+                <p>- Koplampglas rechterzijde auto zwaar beschadigd.</p>
             </div>
-
-            <textarea id="pvInput" class="w-full border-2 border-slate-200 p-6 rounded-2xl text-sm min-h-[400px] outline-none focus:border-police font-mono shadow-inner" placeholder="Typ hier het Proces-Verbaal conform de redenen van wetenschap..."></textarea>
-            
-            <div class="no-print space-y-4">
-                <button onclick="sendData('PV Bevindingen', 'pvInput')" class="w-full bg-police text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest italic shadow-xl transition-all hover:bg-blue-900">Verstuur naar livefeed</button>
-            </div>
+            <textarea id="pvInput" class="w-full border-2 border-slate-200 p-6 rounded-2xl text-sm min-h-[400px] outline-none font-mono" placeholder="Schrijf PV..."></textarea>
+            <button onclick="sendData('PV Bevindingen', 'pvInput')" class="no-print w-full bg-police text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest shadow-xl">Verstuur PV</button>
         </section>
 
-        <section class="bg-slate-200 p-6 rounded-2xl no-print border-2 border-slate-300">
+        <section class="bg-slate-200 p-6 rounded-2xl no-print border-2 border-slate-300 shadow-sm">
             <h2 class="font-black uppercase text-sm mb-4 text-slate-700">3. Feedback over de Casus</h2>
-            <textarea id="feedbackInput" class="w-full border-2 border-slate-300 p-4 rounded-xl text-sm h-24 mb-4 outline-none focus:border-slate-500 shadow-inner" placeholder="Laat hier je feedback achter voor de docent..."></textarea>
-            <button onclick="sendData('Feedback', 'feedbackInput')" class="w-full bg-slate-600 text-white py-3 rounded-xl font-black uppercase text-xs hover:bg-slate-800 transition-all">Verstuur Feedback</button>
+            <textarea id="feedbackInput" class="w-full border-2 border-slate-300 p-4 rounded-xl text-sm h-24 mb-4 outline-none" placeholder="Feedback voor de docent..."></textarea>
+            <button onclick="sendData('Feedback', 'feedbackInput')" class="w-full bg-slate-600 text-white py-3 rounded-xl font-black uppercase text-xs">Verstuur Feedback</button>
         </section>
 
         <section class="no-print pt-10">
-            <h2 class="text-center font-black uppercase text-[10px] text-slate-400 mb-6 tracking-widest italic border-b pb-2">
-                Livefeed Overzicht: Eenheid <span id="displayKlasFeed"></span>
-            </h2>
+            <h2 class="text-center font-black uppercase text-[10px] text-slate-400 mb-6 tracking-widest border-b pb-2">Livefeed Eenheid: <span id="displayKlasFeed"></span></h2>
             <div id="liveFeed" class="max-w-3xl mx-auto pb-20"></div>
         </section>
 
     </div>
-
 </body>
 </html>
