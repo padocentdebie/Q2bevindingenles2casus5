@@ -22,7 +22,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         
-        // Audio variabelen
         let synth = window.speechSynthesis;
         let currentUtterance = null;
 
@@ -37,7 +36,6 @@
             initLive(klas);
         };
 
-        // Verbeterde Audio Functies
         window.speakWitness = () => {
             if (synth.paused) {
                 synth.resume();
@@ -46,7 +44,13 @@
                 const text = document.getElementById('witnessText').innerText;
                 currentUtterance = new SpeechSynthesisUtterance(text);
                 currentUtterance.lang = 'nl-NL';
-                currentUtterance.rate = 0.9; // Iets rustiger tempo voor duidelijkheid
+                currentUtterance.rate = 0.9; 
+
+                // Cruciale actie voor begrijpend luisteren:
+                currentUtterance.onend = () => {
+                    document.getElementById('witnessText').classList.remove('hidden');
+                };
+
                 synth.speak(currentUtterance);
             }
         };
@@ -152,7 +156,7 @@
                     <button onclick="stopWitness()" class="bg-red-600 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase shadow-sm hover:bg-red-700 transition-colors">Stop</button>
                 </div>
             </div>
-            <p id="witnessText" class="italic text-sm text-slate-700 bg-slate-50 p-4 rounded-xl leading-relaxed border border-slate-100 shadow-inner">
+            <p id="witnessText" class="hidden italic text-sm text-slate-700 bg-slate-50 p-4 rounded-xl leading-relaxed border border-slate-100 shadow-inner">
                 "Ik liep net over de Dapperstraat en wilde de Eerste van Swindenstraat via de voetgangersoversteekplaats oversteken. Ongeveer vijf meter voor mij liep een man. Ik zag dat hij al de voetgangersoversteekplaats was opgelopen. Op hetzelfde moment zag ik een zwarte Volkswagen Golf met hoge snelheid aan komen rijden. Deze Volkswagen Golf reed over de Eerste van Swindenstraat komende uit de richting van de Pontanusstraat en reed in de richting van de Linneausstraat. Ik zag dat de bestuurder van deze auto geen vaart minderde bij het naderen van de voetgangersoversteekplaats. Ik zag dat deze auto met hoge snelheid de man aanreed die zich op dat moment op de voetgangersoversteekplaats bevond. Ik zag dat de man door deze aanrijding tegen het wegdek werd geworpen en daar gewond bleef liggen. Vervolgens belde ik de politie."
             </p>
         </section>
