@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BTV Dashboard - Live Feed Eenheid</title>
+    <title>BTV Dashboard | LIVE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBRq1HFmhrpW_EMMZwpURrbTArz-L5iWT4",
@@ -21,103 +21,106 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        let currentKlas = "";
+        let studentNaam = "";
+        let studentKlas = "";
 
+        // LOGIN FUNCTIE
         window.startLes = () => {
-            const naam = document.getElementById('uNaam').value.trim();
-            const klas = document.getElementById('uKlas').value;
-            if(!naam || !klas) return alert("Vul voornaam en eenheid in.");
+            studentNaam = document.getElementById('uNaam').value.trim();
+            studentKlas = document.getElementById('uKlas').value;
             
-            currentKlas = klas;
-            document.getElementById('loginOverlay').style.display='none';
+            if(!studentNaam || !studentKlas) {
+                alert("Naam en Eenheid invullen a.u.b.");
+                return;
+            }
+            
+            document.getElementById('loginOverlay').classList.add('hidden');
             document.getElementById('mainContent').classList.remove('hidden');
-            document.getElementById('displayKlas').innerText = klas;
-            document.getElementById('displayKlasFeed').innerText = klas;
+            document.getElementById('displayKlas').innerText = studentKlas;
             
-            initLiveFeed(klas);
+            listenToFeed(studentKlas);
         };
 
-        // DE LIVEFEED DIE ALLES VAN DE KLAS LAAT ZIEN
-        function initLiveFeed(klas) {
-            const q = query(
-                collection(db, "btv_2026"), 
-                where("klas", "==", klas), 
-                orderBy("ts", "desc")
-            );
-
-            onSnapshot(q, (snapshot) => {
-                const feedElement = document.getElementById('liveFeed');
-                feedElement.innerHTML = ""; // Schoonmaken voor nieuwe update
-
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    renderFeedItem(data, feedElement);
-                });
-            }, (error) => {
-                console.error("Firestore Error:", error);
-                if(error.code === 'failed-precondition') {
-                    alert("Index nog niet aangemaakt in Firebase! Zie console voor link.");
-                }
-            });
-        }
-
-        function renderFeedItem(data, container) {
-            const typeConfig = {
-                'DAA': { color: 'bg-yellow-600', label: 'DAA Opdracht' },
-                'PV Bevindingen': { color: 'bg-blue-900', label: 'Proces-Verbaal' },
-                'Feedback': { color: 'bg-slate-500', label: 'Feedback/Vraag' }
-            };
-            const config = typeConfig[data.type] || typeConfig['Feedback'];
-            const tijd = data.ts ? new Date(data.ts.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Zojuist';
-
-            const html = `
-                <div class="mb-4 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-all hover:shadow-md">
-                    <div class="bg-slate-50 px-4 py-2 border-b flex justify-between items-center">
-                        <div class="flex items-center gap-2">
-                            <div class="w-7 h-7 rounded-full ${config.color} text-white flex items-center justify-center font-bold text-xs">
-                                ${data.naam.charAt(0)}
-                            </div>
-                            <div class="flex flex-col">
-                                <span class="text-[10px] font-black uppercase text-slate-700">${data.naam}</span>
-                                <span class="text-[8px] text-slate-400 font-bold">${tijd}</span>
-                            </div>
-                        </div>
-                        <span class="${config.color} text-white px-2 py-0.5 rounded text-[8px] font-black uppercase">
-                            ${config.label}
-                        </span>
-                    </div>
-                    <div class="p-4 text-sm text-slate-800 leading-relaxed whitespace-pre-wrap font-medium">${data.txt}</div>
-                    <div class="bg-slate-50 px-4 py-1 border-t text-right">
-                         <button onclick="replyTo('${data.naam}')" class="text-[9px] font-bold text-blue-600 uppercase hover:underline">Antwoorden</button>
-                    </div>
-                </div>`;
-            container.insertAdjacentHTML('beforeend', html);
-        }
-
+        // DATA VERZENDEN
         window.sendData = async (type, elementId) => {
             const txt = document.getElementById(elementId).value.trim();
-            const naam = document.getElementById('uNaam').value.trim();
-            if(!txt) return alert("Veld is leeg.");
+            if(!txt) return;
 
-            await addDoc(collection(db, "btv_2026"), {
-                naam: naam,
-                klas: currentKlas,
-                type: type,
-                txt: txt,
-                ts: serverTimestamp()
-            });
-
-            if(type !== 'PV Bevindingen') document.getElementById(elementId).value = "";
-            console.log("Data verzonden voor eenheid: " + currentKlas);
+            try {
+                await addDoc(collection(db, "btv_2026"), {
+                    naam: studentNaam,
+                    klas: studentKlas,
+                    type: type,
+                    txt: txt,
+                    ts: serverTimestamp()
+                });
+                
+                // Alleen leegmaken bij feedback en DAA
+                if(type !== 'PV Bevindingen') {
+                    document.getElementById(elementId).value = "";
+                }
+                console.log("Succesvol verzonden");
+            } catch (e) {
+                console.error("Fout:", e);
+                alert("Verzendfout: " + e.message);
+            }
         };
 
-        window.replyTo = (target) => {
+        // DE LIVEFEED (GEFILTERD OP KLAS, GESORTEERD IN JS)
+        function listenToFeed(klas) {
+            // We filteren alleen op klas, sorteren doen we in de client om Firebase-indexfouten te voorkomen
+            const q = query(collection(db, "btv_2026"), where("klas", "==", klas));
+
+            onSnapshot(q, (snapshot) => {
+                const feed = document.getElementById('liveFeed');
+                
+                // Haal alle docs op en zet ze in een array om te sorteren
+                let messages = [];
+                snapshot.forEach(doc => {
+                    messages.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Sorteren op tijd (nieuwste bovenaan)
+                messages.sort((a, b) => {
+                    const timeA = a.ts ? a.ts.toMillis() : Date.now();
+                    const timeB = b.ts ? b.ts.toMillis() : Date.now();
+                    return timeB - timeA;
+                });
+
+                // Renderen
+                feed.innerHTML = "";
+                messages.forEach(msg => {
+                    const config = {
+                        'DAA': 'border-l-yellow-500 bg-yellow-50 text-yellow-900',
+                        'PV Bevindingen': 'border-l-blue-900 bg-blue-50 text-blue-900',
+                        'Feedback': 'border-l-slate-400 bg-slate-50 text-slate-700'
+                    }[msg.type] || 'border-l-gray-300 bg-gray-50';
+
+                    const tijd = msg.ts ? new Date(msg.ts.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '...';
+
+                    feed.innerHTML += `
+                        <div class="mb-4 bg-white border border-slate-200 border-l-4 ${config.split(' ')[0]} rounded-lg shadow-sm overflow-hidden animate-in fade-in duration-300">
+                            <div class="px-4 py-2 border-b flex justify-between items-center bg-white/50">
+                                <span class="font-black text-[10px] uppercase tracking-tighter text-slate-600">${msg.naam} • ${tijd}</span>
+                                <span class="text-[9px] font-bold px-2 py-0.5 rounded ${config.split(' ')[1]} ${config.split(' ')[2]} uppercase">${msg.type}</span>
+                            </div>
+                            <div class="p-4 text-sm leading-relaxed whitespace-pre-wrap font-medium">${msg.txt}</div>
+                            <div class="px-4 py-1 bg-slate-50 border-t text-right">
+                                <button onclick="replyTo('${msg.naam}')" class="text-[9px] font-black text-blue-600 uppercase">Beantwoorden</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        window.replyTo = (naam) => {
             const input = document.getElementById('feedbackInput');
-            input.value = `@${target}: `;
+            input.value = `@${naam}: `;
             input.focus();
         };
 
-        window.generatePDF = () => { window.print(); };
+        window.generatePDF = () => window.print();
     </script>
 
     <style>
@@ -125,49 +128,52 @@
         @media print { .no-print { display: none; } }
     </style>
 </head>
-<body class="bg-slate-100 pb-10">
+<body class="bg-slate-100 min-h-screen">
 
     <div id="loginOverlay" class="fixed inset-0 bg-police z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md border-t-8 border-yellow-500">
-            <h1 class="font-black text-2xl mb-2 text-[#002d5e] uppercase italic text-center">BTV Live Dashboard</h1>
-            <input type="text" id="uNaam" placeholder="Je Voornaam" class="w-full border-2 p-4 rounded-xl mb-4 font-bold text-center outline-none">
-            <select id="uKlas" class="w-full border-2 p-4 rounded-xl mb-8 font-bold text-center outline-none">
-                <option value="">-- Kies NATO Eenheid --</option>
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm border-t-8 border-yellow-500 text-center">
+            <h1 class="font-black text-2xl text-[#002d5e] uppercase italic mb-6">BTV Live Log</h1>
+            <input type="text" id="uNaam" placeholder="Voornaam" class="w-full border-2 p-3 rounded-lg mb-4 font-bold outline-none focus:border-blue-900 text-center">
+            <select id="uKlas" class="w-full border-2 p-3 rounded-lg mb-8 font-bold outline-none focus:border-blue-900 text-center">
+                <option value="">-- Eenheid --</option>
                 <option>Delta</option><option>Echo</option><option>Foxtrot</option><option>Lima</option><option>Mike</option>
             </select>
-            <button onclick="startLes()" class="w-full bg-police text-white p-5 rounded-xl font-black uppercase tracking-widest transition-all active:scale-95">Betreed Live Feed</button>
+            <button onclick="startLes()" class="w-full bg-police text-white py-4 rounded-xl font-black uppercase tracking-widest">Start Live Feed</button>
         </div>
     </div>
 
-    <div id="mainContent" class="hidden max-w-5xl mx-auto p-4 space-y-6">
-        <header class="bg-police text-white p-4 rounded-2xl shadow-lg flex justify-between items-center no-print">
-            <h1 class="font-black italic uppercase text-lg">Tijdlijn Eenheid <span id="displayKlas"></span></h1>
-            <button onclick="generatePDF()" class="bg-white text-police px-3 py-1 rounded font-bold text-[10px] uppercase">Print Dossier</button>
+    <div id="mainContent" class="hidden max-w-6xl mx-auto p-4 md:p-8 space-y-8">
+        <header class="flex justify-between items-center border-b-4 border-[#002d5e] pb-4 no-print">
+            <h1 class="font-black italic text-2xl text-[#002d5e] uppercase">Eenheid <span id="displayKlas" class="text-yellow-600"></span></h1>
+            <button onclick="generatePDF()" class="bg-slate-800 text-white px-4 py-2 rounded font-bold text-xs uppercase">Dossier Printen</button>
         </header>
 
-        <div class="grid md:grid-cols-2 gap-6 no-print">
-            <div class="bg-yellow-50 border-2 border-yellow-400 p-4 rounded-2xl">
-                <h2 class="font-black uppercase text-xs mb-2 italic">1. DAA Plan</h2>
-                <textarea id="daaInput" class="w-full h-24 p-3 text-xs border rounded-xl outline-none" placeholder="Doel, Aanpak, Analyse..."></textarea>
-                <button onclick="sendData('DAA', 'daaInput')" class="w-full mt-2 bg-yellow-600 text-white py-2 rounded-lg font-black text-[10px] uppercase">Update Plan</button>
-            </div>
-            <div class="bg-slate-200 border-2 border-slate-300 p-4 rounded-2xl text-center">
-                 <h2 class="font-black uppercase text-xs mb-2 italic">2. Peer Feedback</h2>
-                 <textarea id="feedbackInput" class="w-full h-24 p-3 text-xs border rounded-xl outline-none" placeholder="Geef feedback op een collega..."></textarea>
-                 <button onclick="sendData('Feedback', 'feedbackInput')" class="w-full mt-2 bg-slate-600 text-white py-2 rounded-lg font-black text-[10px] uppercase">Plaats Reactie</button>
-            </div>
-        </div>
-
-        <div class="bg-white p-6 rounded-2xl shadow-xl border-t-8 border-police no-print">
-            <h2 class="font-black uppercase text-sm mb-2 italic">3. Concept Proces-Verbaal</h2>
-            <textarea id="pvInput" class="w-full h-64 p-4 text-sm border-2 font-mono rounded-xl outline-none" placeholder="Schrijf hier je bevindingen...">PV VAN BEVINDINGEN...</textarea>
-            <button onclick="sendData('PV Bevindingen', 'pvInput')" class="w-full mt-4 bg-police text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest">Publiceer PV in de Feed</button>
-        </div>
-
-        <div class="pt-6">
-            <h2 class="text-center font-black uppercase text-[10px] text-slate-400 mb-4 tracking-widest border-b pb-2">Gezamenlijke Tijdlijn: Eenheid <span id="displayKlasFeed"></span></h2>
-            <div id="liveFeed" class="max-w-2xl mx-auto pb-20">
+        <div class="grid lg:grid-cols-2 gap-8">
+            <div class="space-y-6 no-print">
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h2 class="font-black text-xs uppercase mb-4 text-slate-400 italic tracking-widest">1. Plan van Aanpak (DAA)</h2>
+                    <textarea id="daaInput" class="w-full h-24 p-4 bg-yellow-50 border rounded-lg text-sm outline-none" placeholder="Doel, Aanpak, Analyse..."></textarea>
+                    <button onclick="sendData('DAA', 'daaInput')" class="w-full mt-3 bg-yellow-600 text-white py-2 rounded-lg font-black text-[10px] uppercase">Plan Publiceren</button>
                 </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h2 class="font-black text-xs uppercase mb-4 text-slate-400 italic tracking-widest">2. Proces-Verbaal</h2>
+                    <textarea id="pvInput" class="w-full h-80 p-4 bg-slate-50 border font-mono text-sm rounded-lg outline-none" placeholder="Ik, verbalisant...">PV VAN BEVINDINGEN...</textarea>
+                    <button onclick="sendData('PV Bevindingen', 'pvInput')" class="w-full mt-3 bg-[#002d5e] text-white py-3 rounded-lg font-black text-xs uppercase tracking-widest">PV Versturen naar Tijdlijn</button>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h2 class="font-black text-xs uppercase mb-4 text-slate-400 italic tracking-widest">3. Reactie / Feedback</h2>
+                    <textarea id="feedbackInput" class="w-full h-20 p-4 border rounded-lg text-sm outline-none" placeholder="Geef feedback op een collega..."></textarea>
+                    <button onclick="sendData('Feedback', 'feedbackInput')" class="w-full mt-3 bg-slate-600 text-white py-2 rounded-lg font-black text-[10px] uppercase">Bericht Plaatsen</button>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <h2 class="text-center font-black text-[10px] text-slate-400 uppercase tracking-[0.3em] mb-6">Live Tijdlijn Eenheid</h2>
+                <div id="liveFeed" class="space-y-4 max-h-[1200px] overflow-y-auto pr-2">
+                    </div>
+            </div>
         </div>
     </div>
 
