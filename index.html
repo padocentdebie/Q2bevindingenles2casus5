@@ -46,7 +46,6 @@
                 currentUtterance.lang = 'nl-NL';
                 currentUtterance.rate = 0.9; 
 
-                // Cruciale actie voor begrijpend luisteren:
                 currentUtterance.onend = () => {
                     document.getElementById('witnessText').classList.remove('hidden');
                 };
@@ -172,7 +171,13 @@
                 <p>- Glasfragmenten koplamp rechterzijde auto.</p>
                 <p>- Koplampglas rechterzijde auto zwaar beschadigd.</p>
             </div>
-            <textarea id="pvInput" class="w-full border-2 border-slate-200 p-6 rounded-2xl text-sm min-h-[400px] outline-none font-mono shadow-inner" placeholder="Schrijf PV..."></textarea>
+            <textarea id="pvInput" class="w-full border-2 border-slate-200 p-6 rounded-2xl text-sm min-h-[400px] outline-none font-mono shadow-inner" placeholder="Schrijf PV...">PV VAN BEVINDINGEN
+
+SPORENOVERZICHT:
+- REMSLEEP: Op het wegdek trof ik een rechtlijnig blokkeerspoor aan met een lengte van 12 meter, lopende in de rijrichting van de Pontanusstraat naar de Linnaeusstraat.
+- BIOLOGISCH MATERIAAL: Exact op de witte markeerschillering van de VOP trof ik een rode substantie aan, zijnde van bloed afkomstig biologisch materiaal.
+- GLASFRAGMENTEN: Op het wegdek rondom de VOP trof ik diverse transparante glasfragmenten aan.
+- VOERTUIGSCHADE: Ik nam waar dat de koplampunit aan de rechtervoorzijde van de auto zwaar was beschadigd en dat het koplampglas aldaar was verbrijzeld.</textarea>
             <button onclick="sendData('PV Bevindingen', 'pvInput')" class="no-print w-full bg-police text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-blue-900 transition-all">Verstuur PV</button>
         </section>
 
