@@ -3,28 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BTV Dashboard | Casus 5: Dapperstraat</title>
+    <title>BTV Live Feedback Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
     <style>
         .bg-police { background-color: #002d5e; }
-        .oc-glow { box-shadow: 0 0 25px rgba(220, 38, 38, 0.5); }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-        .animate-blink { animation: blink 1.5s infinite; }
-        .feedback-node { position: relative; margin-left: 2rem; }
-        .feedback-node::before { content: ''; position: absolute; left: -1rem; top: -1rem; bottom: 1.5rem; width: 2px; background: #cbd5e1; }
+        .feedback-item { position: relative; margin-left: 2.5rem; }
+        .feedback-item::before { content: ''; position: absolute; left: -1.25rem; top: -1rem; bottom: 1.5rem; width: 2px; background: #cbd5e1; }
+        @keyframes slide { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+        .animate-fb { animation: slide 0.3s ease-out forwards; }
     </style>
 </head>
-<body class="bg-slate-200 min-h-screen font-sans">
+<body class="bg-slate-100 min-h-screen font-sans">
 
     <div id="loginOverlay" class="fixed inset-0 bg-[#002d5e] z-[100] flex items-center justify-center p-4">
         <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm border-t-8 border-yellow-500 text-center">
             <h1 class="font-black text-3xl text-[#002d5e] uppercase italic mb-8">BTV LIVE</h1>
-            <input type="text" id="uNaam" placeholder="Naam Verbalisant" class="w-full border-2 p-4 rounded-xl mb-4 text-center font-bold outline-none focus:border-blue-500">
+            <input type="text" id="uNaam" placeholder="Naam" class="w-full border-2 p-4 rounded-xl mb-4 text-center font-bold outline-none">
             <select id="uKlas" class="w-full border-2 p-4 rounded-xl mb-8 text-center font-bold outline-none">
                 <option value="">-- Eenheid --</option>
                 <option>Delta</option><option>Echo</option><option>Foxtrot</option>
@@ -33,70 +32,26 @@
         </div>
     </div>
 
-    <div id="mainContent" class="hidden max-w-[1700px] mx-auto p-4 lg:p-8 space-y-6">
+    <div id="mainContent" class="hidden max-w-[1600px] mx-auto p-4 lg:p-8 space-y-6">
         
-        <header class="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border-b-4 border-[#002d5e]">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-[#002d5e] rounded-lg flex items-center justify-center text-white shadow-lg text-xl">🚨</div>
-                <div>
-                    <h1 class="font-black text-2xl text-[#002d5e] uppercase italic">Casus 5: Dapperstraat</h1>
-                    <p class="text-[10px] font-bold text-red-600 animate-blink uppercase">● LIVE VERBINDING OPERATIONEEL CENTRUM - <span id="displayKlas"></span></p>
-                </div>
-            </div>
-        </header>
-
         <div class="grid lg:grid-cols-12 gap-8">
             
             <div class="lg:col-span-5 space-y-6">
-                
-                <div class="bg-white rounded-2xl shadow-xl border-2 border-red-600 overflow-hidden oc-glow">
-                    <div class="bg-red-600 px-6 py-3 flex justify-between items-center text-white">
-                        <span class="font-black text-xs uppercase tracking-widest italic">Incident Melding (OC)</span>
-                        <div class="flex gap-2">
-                            <button onclick="mediaAction('play', 'ocInput')" class="bg-white/20 hover:bg-white/40 px-3 py-1 rounded text-[10px] font-black uppercase">▶ Afspelen</button>
-                            <button onclick="resetMedia('ocInput')" class="bg-white/20 hover:bg-white/40 px-3 py-1 rounded text-[10px] font-black uppercase">↺</button>
-                        </div>
-                    </div>
-                    
-                    <div class="p-4 grid grid-cols-2 gap-2 bg-slate-50 border-b">
-                        <img src="casus5luchtfoto.png" class="rounded border h-24 w-full object-cover">
-                        <img src="casus5streetview.png" class="rounded border h-24 w-full object-cover">
-                        <img src="casus5terplaatse.png" class="rounded border h-24 w-full object-cover">
-                        <img src="casus530kmuur.png" class="rounded border h-24 w-full object-cover">
-                    </div>
-
-                    <div class="p-6">
-                        <textarea id="ocInput" class="w-full h-24 p-4 bg-red-50 text-red-900 border-none font-bold text-sm outline-none resize-none leading-relaxed" readonly>CENTRALIST OC: "Aanrijding voetganger Eerste van Swindenstraat / Dapperstraat. Zwarte VW Golf doorgereden richting Linneausstraat. Meerdere getuigen aanwezig. Ambulance onderweg."</textarea>
-                        <button onclick="publish('OC Melding', 'ocInput')" class="w-full mt-2 bg-red-600 text-white py-3 rounded-xl font-black text-[10px] uppercase shadow-md">Publiceer op Live-Feed</button>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-2xl shadow-xl border border-emerald-200 overflow-hidden">
-                    <div class="bg-emerald-600 px-6 py-4 flex justify-between items-center text-white">
-                        <span class="font-black text-xs uppercase tracking-widest italic">Verhoor Getuige</span>
-                        <button onclick="mediaAction('play', 'getuigeInput')" class="bg-white/20 hover:bg-white/40 px-4 py-1 rounded-full text-[10px] font-black uppercase transition-all">▶ Start Audio</button>
-                    </div>
-                    <div class="p-6">
-                        <textarea id="getuigeInput" class="w-full h-40 p-4 bg-emerald-50/50 border-2 border-emerald-100 rounded-xl text-sm font-medium focus:bg-white outline-none transition-all leading-relaxed italic" readonly>Ik liep zojuist over de Dapperstraat en wilde de Eerste van Swindenstraat via de voetgangersoversteekplaats oversteken. Ongeveer vijf meter voor mij liep een man. Ik zag dat hij inmiddels de voetgangersoversteekplaats was opgelopen. Tegelijkertijd zag ik een zwarte Volkswagen Golf met hoge snelheid aan komen rijden. Deze Volkswagen Golf reed over de Eerste van Swindenstraat komende uit de richting van de Pontanusstraat en rijdende in de richting van de Linneausstraat. Ik zag dat de bestuurder van deze auto geen vaart minderde bij het naderen van de voetgangersoversteekplaats. Ik zag dat deze auto met hoge snelheid de man aanreed die zich op dat moment op de voetgangersoversteekplaats bevond. Ik zag dat de man door deze aanrijding tegen het wegdek werd geworpen en daar gewond bleef liggen. Ik heb vervolgens de politie gebeld.</textarea>
-                        <button onclick="publish('Getuigeverklaring', 'getuigeInput')" class="w-full mt-4 bg-emerald-600 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg">Verklaring Verwerken</button>
-                    </div>
-                </div>
-
                 <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-                    <div class="px-6 py-3 border-b bg-slate-50 text-[10px] font-black uppercase text-slate-400 italic">PV van Bevindingen</div>
+                    <div class="bg-[#002d5e] px-6 py-4 flex justify-between items-center text-white text-xs font-black uppercase tracking-widest italic">
+                        PV van Bevindingen Opstellen
+                    </div>
                     <div class="p-6">
-                        <textarea id="pvInput" class="w-full h-32 p-4 bg-blue-50/20 border-2 border-blue-100 rounded-xl font-mono text-xs outline-none" placeholder="Ik, verbalisant..."></textarea>
-                        <button onclick="publish('PV Bevindingen', 'pvInput')" class="w-full mt-2 bg-[#002d5e] text-white py-3 rounded-xl font-black text-[10px] uppercase shadow-md">Publiceer PV ter Beoordeling</button>
+                        <textarea id="pvInput" class="w-full h-80 p-6 bg-slate-50 border-2 border-slate-100 rounded-xl font-mono text-sm leading-relaxed focus:bg-white outline-none" placeholder="Begin hier met je PV..."></textarea>
+                        <button onclick="publishPV()" class="w-full mt-4 bg-[#002d5e] text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all">Verstuur ter Beoordeling</button>
                     </div>
                 </div>
             </div>
 
             <div class="lg:col-span-7">
-                <div class="sticky top-8">
-                    <h2 class="text-center font-black text-[11px] text-slate-400 uppercase tracking-[0.4em] mb-4">Realtime Dossier-Stroom</h2>
-                    <div id="liveFeed" class="space-y-6 max-h-[85vh] overflow-y-auto pr-4 custom-scrollbar pb-20">
-                        </div>
-                </div>
+                <h2 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 text-center italic">Live Dossier & Beoordelingen</h2>
+                <div id="liveFeed" class="space-y-8 max-h-[85vh] overflow-y-auto pr-4 custom-scrollbar">
+                    </div>
             </div>
 
         </div>
@@ -115,43 +70,31 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let sNaam = "", sKlas = "", tw, fullT = "", idx = 0;
+        let sNaam = "", sKlas = "";
 
         window.startDashboard = () => {
             sNaam = document.getElementById('uNaam').value.trim();
             sKlas = document.getElementById('uKlas').value;
-            if(!sNaam || !sKlas) return alert("Voer naam en eenheid in.");
+            if(!sNaam || !sKlas) return alert("Vul gegevens in.");
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('mainContent').classList.remove('hidden');
-            document.getElementById('displayKlas').innerText = sKlas;
             initFeed(sKlas);
         };
 
-        window.mediaAction = (action, id) => {
-            const el = document.getElementById(id);
-            if(action === 'play') {
-                if(!fullT || el.value !== fullT) { fullT = el.value; idx = 0; el.value = ""; }
-                clearInterval(tw);
-                tw = setInterval(() => {
-                    if(idx < fullT.length) { el.value += fullT[idx++]; el.scrollTop = el.scrollHeight; }
-                    else clearInterval(tw);
-                }, 30);
-            }
-        };
-
-        window.resetMedia = (id) => { clearInterval(tw); document.getElementById(id).value = fullT; fullT = ""; idx = 0; };
-
-        window.publish = (type, inputId) => {
-            const val = document.getElementById(inputId).value.trim();
+        window.publishPV = () => {
+            const val = document.getElementById('pvInput').value.trim();
             if(!val) return;
-            db.ref('btv_2026/' + sKlas).push().set({ naam: sNaam, type: type, txt: val, ts: Date.now() });
-            if(inputId !== 'ocInput' && inputId !== 'getuigeInput') document.getElementById(inputId).value = "";
+            db.ref('btv_2026/' + sKlas).push().set({
+                naam: sNaam, type: 'PV Bevindingen', txt: val, ts: Date.now()
+            });
+            document.getElementById('pvInput').value = "";
         };
 
         window.sendFeedback = (targetId) => {
             const inputEl = document.getElementById('fbInput-' + targetId);
             const fbText = inputEl.value.trim();
             if(!fbText) return;
+            
             db.ref('btv_2026/' + sKlas).push().set({
                 naam: sNaam, type: 'Feedback', txt: fbText, ts: Date.now(), replyTo: targetId
             });
@@ -167,27 +110,34 @@
                 const mains = all.filter(m => m.type !== 'Feedback').sort((a,b) => b.ts - a.ts);
 
                 mains.forEach(m => {
-                    const style = m.type === 'OC Melding' ? 'border-l-red-600 bg-red-50' : (m.type === 'Getuigeverklaring' ? 'border-l-emerald-600 bg-emerald-50' : 'border-l-[#002d5e] bg-white');
                     let card = document.createElement('div');
-                    card.className = "space-y-2";
+                    card.className = "space-y-3";
                     card.innerHTML = `
-                        <div class="bg-white border-l-8 ${style} rounded-2xl shadow-md border border-slate-200 overflow-hidden">
-                            <div class="px-5 py-2 border-b flex justify-between items-center text-[10px] font-black uppercase text-slate-400">
-                                <span>${m.naam} • ${m.type}</span>
+                        <div class="bg-white border-l-8 border-[#002d5e] rounded-2xl shadow-md border border-slate-200 overflow-hidden">
+                            <div class="px-5 py-2 border-b bg-slate-50 flex justify-between items-center text-[10px] font-black uppercase text-slate-400">
+                                <span>${m.naam} • ${new Date(m.ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                                <span class="italic text-[#002d5e]">${m.type}</span>
                             </div>
-                            <div class="p-6 text-sm font-medium leading-relaxed whitespace-pre-wrap">${m.txt}</div>
-                            <div class="px-5 py-3 bg-slate-50 border-t flex gap-2">
-                                <input id="fbInput-${m.id}" type="text" placeholder="Typ je feedback..." class="flex-1 bg-white border rounded-lg px-3 py-1 text-xs outline-none focus:border-blue-400">
-                                <button onclick="sendFeedback('${m.id}')" class="bg-blue-600 text-white px-4 py-1 rounded-lg text-[10px] font-black uppercase shadow-sm active:scale-95 transition-all">Verstuur</button>
+                            <div class="p-6 text-sm font-medium leading-relaxed whitespace-pre-wrap text-slate-800">${m.txt}</div>
+                            
+                            <div class="px-5 py-3 bg-slate-50 border-t flex gap-2 items-center">
+                                <input id="fbInput-${m.id}" type="text" placeholder="Schrijf een beoordeling..." 
+                                    class="flex-1 bg-white border-2 border-slate-200 rounded-lg px-4 py-2 text-xs font-bold outline-none focus:border-[#002d5e] transition-all">
+                                <button onclick="sendFeedback('${m.id}')" 
+                                    class="bg-yellow-500 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase shadow-sm hover:bg-yellow-600 transition-all">Verstuur</button>
                             </div>
                         </div>`;
 
+                    // FEEDBACK LIJST (Genest onder het bericht)
                     const replies = all.filter(r => r.replyTo === m.id).sort((a,b) => a.ts - b.ts);
                     replies.forEach(r => {
                         card.innerHTML += `
-                            <div class="feedback-node p-3 bg-slate-100 rounded-xl border-l-4 border-slate-400 text-xs italic shadow-sm mb-2">
-                                <span class="font-black uppercase text-[9px] text-slate-500 block">${r.naam} (Beoordeling):</span>
-                                "${r.txt}"
+                            <div class="feedback-item animate-fb p-4 bg-slate-200/50 rounded-xl border-l-4 border-slate-400 text-xs italic shadow-sm mb-2">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="font-black uppercase text-[9px] text-slate-500">${r.naam} beoordeelt:</span>
+                                    <span class="text-[8px] text-slate-400">${new Date(r.ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                                </div>
+                                <div class="text-slate-700 font-medium">"${r.txt}"</div>
                             </div>`;
                     });
                     feed.appendChild(card);
