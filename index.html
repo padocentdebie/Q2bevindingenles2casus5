@@ -3,27 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BTV Live Feedback Dashboard</title>
+    <title>BTV Dashboard | Feedback Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
     <style>
         .bg-police { background-color: #002d5e; }
+        .oc-glow { box-shadow: 0 0 20px rgba(220, 38, 38, 0.4); }
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .feedback-item { position: relative; margin-left: 2.5rem; }
-        .feedback-item::before { content: ''; position: absolute; left: -1.25rem; top: -1rem; bottom: 1.5rem; width: 2px; background: #cbd5e1; }
-        @keyframes slide { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
-        .animate-fb { animation: slide 0.3s ease-out forwards; }
+        .feedback-node { position: relative; margin-left: 2rem; }
+        .feedback-node::before { content: ''; position: absolute; left: -1rem; top: -0.5rem; bottom: 1.5rem; width: 2px; background: #cbd5e1; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-msg { animation: fadeIn 0.3s ease-out forwards; }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen font-sans">
+<body class="bg-slate-200 min-h-screen font-sans">
 
     <div id="loginOverlay" class="fixed inset-0 bg-[#002d5e] z-[100] flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm border-t-8 border-yellow-500 text-center">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center border-t-8 border-yellow-500">
             <h1 class="font-black text-3xl text-[#002d5e] uppercase italic mb-8">BTV LIVE</h1>
-            <input type="text" id="uNaam" placeholder="Naam" class="w-full border-2 p-4 rounded-xl mb-4 text-center font-bold outline-none">
+            <input type="text" id="uNaam" placeholder="Naam Verbalisant" class="w-full border-2 p-4 rounded-xl mb-4 text-center font-bold outline-none focus:border-blue-500">
             <select id="uKlas" class="w-full border-2 p-4 rounded-xl mb-8 text-center font-bold outline-none">
                 <option value="">-- Eenheid --</option>
                 <option>Delta</option><option>Echo</option><option>Foxtrot</option>
@@ -32,28 +33,51 @@
         </div>
     </div>
 
-    <div id="mainContent" class="hidden max-w-[1600px] mx-auto p-4 lg:p-8 space-y-6">
+    <div id="mainContent" class="hidden max-w-[1700px] mx-auto p-4 lg:p-8 space-y-6">
         
         <div class="grid lg:grid-cols-12 gap-8">
             
             <div class="lg:col-span-5 space-y-6">
+                <div class="bg-white rounded-2xl shadow-xl border-2 border-red-100 overflow-hidden oc-glow">
+                    <div class="bg-red-600 px-6 py-3 flex justify-between items-center text-white text-[10px] font-black uppercase italic">
+                        <span>Incident Melding</span>
+                        <div class="flex gap-2">
+                            <button onclick="playMedia('ocInput')" class="bg-white/20 px-3 py-1 rounded">▶ Play</button>
+                            <button onclick="resetMedia('ocInput')" class="bg-white/20 px-3 py-1 rounded">↺ Reset</button>
+                        </div>
+                    </div>
+                    <div class="p-2 grid grid-cols-2 gap-1 bg-slate-100">
+                        <img src="casus5luchtfoto.png" class="h-24 w-full object-cover rounded border" onerror="this.src='https://placehold.co/200x150?text=Luchtfoto'">
+                        <img src="casus5streetview.png" class="h-24 w-full object-cover rounded border" onerror="this.src='https://placehold.co/200x150?text=Streetview'">
+                        <img src="casus5terplaatse.png" class="h-24 w-full object-cover rounded border" onerror="this.src='https://placehold.co/200x150?text=Ter+Plaatse'">
+                        <img src="casus530kmuur.png" class="h-24 w-full object-cover rounded border" onerror="this.src='https://placehold.co/200x150?text=30km+Zone'">
+                    </div>
+                    <textarea id="ocInput" data-orig='CENTRALIST OC: "Aanrijding voetganger Dapperstraat / Eerste van Swindenstraat. Zwarte VW Golf doorgereden richting Linneausstraat. Meerdere getuigen aanwezig. Ambulance onderweg."' class="w-full h-24 p-4 text-sm font-bold bg-red-50 text-red-900 border-none outline-none resize-none leading-tight" readonly>CENTRALIST OC: "Aanrijding voetganger Dapperstraat / Eerste van Swindenstraat. Zwarte VW Golf doorgereden richting Linneausstraat. Meerdere getuigen aanwezig. Ambulance onderweg."</textarea>
+                    <button onclick="publish('OC Melding', 'ocInput')" class="w-full bg-red-600 text-white py-3 font-black text-[10px] uppercase">Zet op Tijdlijn</button>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-xl border border-emerald-200 overflow-hidden">
+                    <div class="bg-emerald-600 px-6 py-3 flex justify-between items-center text-white text-[10px] font-black uppercase italic">
+                        <span>Getuigenverhoor</span>
+                        <div class="flex gap-2">
+                            <button onclick="playMedia('gtInput')" class="bg-white/20 px-3 py-1 rounded">▶ Start Audio</button>
+                            <button onclick="resetMedia('gtInput')" class="bg-white/20 px-3 py-1 rounded">↺</button>
+                        </div>
+                    </div>
+                    <textarea id="gtInput" data-orig="Ik liep zojuist over de Dapperstraat en wilde de Eerste van Swindenstraat oversteken via de voetgangersoversteekplaats. Ongeveer vijf meter voor mij liep een man de oversteekplaats op. Tegelijkertijd zag ik een zwarte Volkswagen Golf met hoge snelheid aan komen rijden vanuit de richting van de Pontanusstraat. De bestuurder minderde geen vaart en reed de man vol aan. De man werd tegen het wegdek geworpen. De auto reed daarna met hoge snelheid door." class="w-full h-40 p-4 text-sm font-medium italic bg-emerald-50/50 border-none outline-none leading-relaxed" readonly>Ik liep zojuist over de Dapperstraat en wilde de Eerste van Swindenstraat oversteken via de voetgangersoversteekplaats. Ongeveer vijf meter voor mij liep een man de oversteekplaats op. Tegelijkertijd zag ik een zwarte Volkswagen Golf met hoge snelheid aan komen rijden vanuit de richting van de Pontanusstraat. De bestuurder minderde geen vaart en reed de man vol aan. De man werd tegen het wegdek geworpen. De auto reed daarna met hoge snelheid door.</textarea>
+                    <button onclick="publish('Getuigeverklaring', 'gtInput')" class="w-full bg-emerald-600 text-white py-3 font-black text-[10px] uppercase">Verklaring Opslaan</button>
+                </div>
+
                 <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-                    <div class="bg-[#002d5e] px-6 py-4 flex justify-between items-center text-white text-xs font-black uppercase tracking-widest italic">
-                        PV van Bevindingen Opstellen
-                    </div>
-                    <div class="p-6">
-                        <textarea id="pvInput" class="w-full h-80 p-6 bg-slate-50 border-2 border-slate-100 rounded-xl font-mono text-sm leading-relaxed focus:bg-white outline-none" placeholder="Begin hier met je PV..."></textarea>
-                        <button onclick="publishPV()" class="w-full mt-4 bg-[#002d5e] text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all">Verstuur ter Beoordeling</button>
-                    </div>
+                    <div class="px-6 py-2 bg-slate-50 border-b text-[9px] font-black uppercase text-slate-400 italic">Opmaak PV Bevindingen</div>
+                    <textarea id="pvInput" class="w-full h-32 p-4 text-xs font-mono outline-none" placeholder="Typ hier de tekst voor het PV..."></textarea>
+                    <button onclick="publish('PV Bevindingen', 'pvInput')" class="w-full bg-[#002d5e] text-white py-3 font-black text-[10px] uppercase tracking-widest">Publiceren naar Dossier</button>
                 </div>
             </div>
 
             <div class="lg:col-span-7">
-                <h2 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 text-center italic">Live Dossier & Beoordelingen</h2>
-                <div id="liveFeed" class="space-y-8 max-h-[85vh] overflow-y-auto pr-4 custom-scrollbar">
-                    </div>
+                <div id="liveFeed" class="space-y-6 max-h-[90vh] overflow-y-auto pr-4 custom-scrollbar"></div>
             </div>
-
         </div>
     </div>
 
@@ -70,74 +94,87 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let sNaam = "", sKlas = "";
+        let sNaam = "", sKlas = "", tw, currentIdx = 0;
 
         window.startDashboard = () => {
             sNaam = document.getElementById('uNaam').value.trim();
             sKlas = document.getElementById('uKlas').value;
-            if(!sNaam || !sKlas) return alert("Vul gegevens in.");
+            if(!sNaam || !sKlas) return alert("Naam en Eenheid verplicht.");
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('mainContent').classList.remove('hidden');
             initFeed(sKlas);
         };
 
-        window.publishPV = () => {
-            const val = document.getElementById('pvInput').value.trim();
+        window.playMedia = (id) => {
+            const el = document.getElementById(id);
+            const fullT = el.getAttribute('data-orig');
+            clearInterval(tw);
+            el.value = "";
+            currentIdx = 0;
+            tw = setInterval(() => {
+                if(currentIdx < fullT.length) { el.value += fullT[currentIdx++]; el.scrollTop = el.scrollHeight; }
+                else clearInterval(tw);
+            }, 25);
+        };
+
+        window.resetMedia = (id) => {
+            clearInterval(tw);
+            document.getElementById(id).value = "";
+            currentIdx = 0;
+        };
+
+        window.publish = (type, inputId) => {
+            const el = document.getElementById(inputId);
+            const val = el.value.trim();
             if(!val) return;
             db.ref('btv_2026/' + sKlas).push().set({
-                naam: sNaam, type: 'PV Bevindingen', txt: val, ts: Date.now()
+                naam: sNaam, type: type, txt: val, ts: Date.now()
             });
-            document.getElementById('pvInput').value = "";
+            if(inputId === 'pvInput') el.value = "";
         };
 
         window.sendFeedback = (targetId) => {
-            const inputEl = document.getElementById('fbInput-' + targetId);
-            const fbText = inputEl.value.trim();
-            if(!fbText) return;
+            const input = document.getElementById('fb-' + targetId);
+            const txt = input.value.trim();
+            if(!txt) return;
             
             db.ref('btv_2026/' + sKlas).push().set({
-                naam: sNaam, type: 'Feedback', txt: fbText, ts: Date.now(), replyTo: targetId
+                naam: sNaam, type: 'Feedback', txt: txt, ts: Date.now(), replyTo: targetId
+            }).then(() => {
+                input.value = ""; // Veld pas leegmaken na succesvol versturen
             });
-            inputEl.value = "";
         };
 
         function initFeed(k) {
             db.ref('btv_2026/' + k).on('value', snap => {
-                const feed = document.getElementById('liveFeed'); feed.innerHTML = "";
+                const feed = document.getElementById('liveFeed');
+                feed.innerHTML = "";
                 const data = snap.val(); if(!data) return;
 
                 const all = Object.keys(data).map(id => ({id, ...data[id]}));
                 const mains = all.filter(m => m.type !== 'Feedback').sort((a,b) => b.ts - a.ts);
 
                 mains.forEach(m => {
-                    let card = document.createElement('div');
-                    card.className = "space-y-3";
+                    const card = document.createElement('div');
+                    card.className = "animate-msg mb-6";
                     card.innerHTML = `
-                        <div class="bg-white border-l-8 border-[#002d5e] rounded-2xl shadow-md border border-slate-200 overflow-hidden">
-                            <div class="px-5 py-2 border-b bg-slate-50 flex justify-between items-center text-[10px] font-black uppercase text-slate-400">
-                                <span>${m.naam} • ${new Date(m.ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
-                                <span class="italic text-[#002d5e]">${m.type}</span>
+                        <div class="bg-white rounded-2xl shadow-md border overflow-hidden">
+                            <div class="px-5 py-2 bg-slate-50 border-b flex justify-between items-center text-[10px] font-black uppercase text-slate-400">
+                                <span>${m.naam} • ${m.type}</span>
                             </div>
                             <div class="p-6 text-sm font-medium leading-relaxed whitespace-pre-wrap text-slate-800">${m.txt}</div>
-                            
-                            <div class="px-5 py-3 bg-slate-50 border-t flex gap-2 items-center">
-                                <input id="fbInput-${m.id}" type="text" placeholder="Schrijf een beoordeling..." 
-                                    class="flex-1 bg-white border-2 border-slate-200 rounded-lg px-4 py-2 text-xs font-bold outline-none focus:border-[#002d5e] transition-all">
-                                <button onclick="sendFeedback('${m.id}')" 
-                                    class="bg-yellow-500 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase shadow-sm hover:bg-yellow-600 transition-all">Verstuur</button>
+                            <div class="p-3 bg-slate-50 border-t flex gap-2">
+                                <input id="fb-${m.id}" type="text" placeholder="Typ je beoordeling..." class="flex-1 bg-white border px-3 py-2 text-xs rounded-lg outline-none focus:border-blue-500 font-bold">
+                                <button onclick="sendFeedback('${m.id}')" class="bg-yellow-500 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase">Verstuur</button>
                             </div>
                         </div>`;
 
-                    // FEEDBACK LIJST (Genest onder het bericht)
                     const replies = all.filter(r => r.replyTo === m.id).sort((a,b) => a.ts - b.ts);
                     replies.forEach(r => {
                         card.innerHTML += `
-                            <div class="feedback-item animate-fb p-4 bg-slate-200/50 rounded-xl border-l-4 border-slate-400 text-xs italic shadow-sm mb-2">
-                                <div class="flex justify-between items-center mb-1">
-                                    <span class="font-black uppercase text-[9px] text-slate-500">${r.naam} beoordeelt:</span>
-                                    <span class="text-[8px] text-slate-400">${new Date(r.ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
-                                </div>
-                                <div class="text-slate-700 font-medium">"${r.txt}"</div>
+                            <div class="feedback-node p-3 bg-slate-100 rounded-xl border-l-4 border-slate-400 text-xs italic shadow-sm mt-2">
+                                <span class="font-black uppercase text-[9px] text-slate-500 block mb-1">${r.naam} (FEEDBACK):</span>
+                                "${r.txt}"
                             </div>`;
                     });
                     feed.appendChild(card);
