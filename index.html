@@ -152,7 +152,23 @@
                 input.value = ""; // Veld pas leegmaken na succesvol versturen
             });
         };
-
+window.clearFullFeed = () => {
+    if (!sKlas) return;
+    
+    // Vraag om bevestiging om per ongeluk wissen te voorkomen
+    const bevestig = confirm(`Weet je zeker dat je de volledige tijdlijn van eenheid ${sKlas} wilt wissen? Dit kan niet ongedaan worden gemaakt.`);
+    
+    if (bevestig) {
+        db.ref('btv_2026/' + sKlas).remove()
+            .then(() => {
+                console.log("Feed succesvol gewist");
+                document.getElementById('liveFeed').innerHTML = "";
+            })
+            .catch((error) => {
+                alert("Fout bij het wissen: " + error.message);
+            });
+    }
+};
         function initFeed(k) {
             db.ref('btv_2026/' + k).on('value', snap => {
                 const feed = document.getElementById('liveFeed');
